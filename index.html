@@ -273,7 +273,7 @@ let issuedCreds = null; // {username, password} just generated, shown once
 let adminAuthed = false;
 let adminTab = 'candidates';
 
-const ADMIN_PASS = 'admin123'; // demo-only client-side gate
+const ADMIN_PASS = 'erwin123'; // demo-only client-side gate
 
 function uid(prefix){ return prefix + Math.random().toString(36).slice(2,8); }
 function nowStamp(){
@@ -576,7 +576,7 @@ async function renderAdmin(container){
         <p class="sub">Restricted to election committee members.</p>
         <div class="field"><input type="password" id="adminPassInput" placeholder="Admin password"></div>
         <button class="btn btn-primary" onclick="tryAdminLogin()">Enter</button>
-        <p class="note" style="text-align:center;">Demo password: <span class="mono">admin123</span></p>
+        <p class="note" style="text-align:center;">
       </div>`;
     return;
   }
