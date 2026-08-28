@@ -237,24 +237,33 @@
 <script>
 /* ---------------- storage helpers ---------------- */
 
+const API_URL = 'http://localhost:3000/api';
+
 async function loadJSON(key, fallback){
-  try{
-    const val = localStorage.getItem(key);
-    return val ? JSON.parse(val) : fallback;
-  }catch(e){ return fallback; }
+  try {
+    const res = await fetch(`${API_URL}/${key}`);
+    if(!res.ok) return fallback;
+    const data = await res.json();
+    return data !== null ? data : fallback;
+  } catch(e) { 
+    console.error('Fetch load error:', e);
+    return fallback; 
+  }
 }
 
 async function saveJSON(key, value){
-  try{ 
-    localStorage.setItem(key, JSON.stringify(value)); 
-    return true; 
-  }
-  catch(e){ 
-    console.error('storage error', e); 
+  try {
+    const res = await fetch(`${API_URL}/${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(value)
+    });
+    return res.ok;
+  } catch(e) { 
+    console.error('Fetch save error:', e);
     return false; 
   }
 }
-
 /* ---------------- state ---------------- */
 let mode = 'voter';
 let page = 'home'; // home | register | vote-login | ballot | confirm | done | locked
