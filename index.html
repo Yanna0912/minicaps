@@ -752,7 +752,11 @@ async function bulkAddStudents(){
       }
     }
   });
-  await saveJSON('roster', roster);
+  const saved = await saveJSON('roster', roster);
+  if(!saved){
+    alert('Students could not be saved. Check that the backend and Supabase are configured correctly.');
+    return;
+  }
   alert(`Successfully added ${addedCount} student(s).`);
   render();
 }

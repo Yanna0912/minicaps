@@ -8,8 +8,14 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize Supabase Client (Make sure to set environment variables or replace with credentials)
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_KEY environment variable.');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // GET endpoint to load JSON data by key from Supabase
 app.get('/api/:key', async (req, res) => {
