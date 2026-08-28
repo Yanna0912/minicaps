@@ -11,8 +11,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/server": "^1.4.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "sqlite3": "^6.0.1"
+  },
+  "allowScripts": {
+    "@supabase/server@1.4.1": true
   }
 }

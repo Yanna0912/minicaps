@@ -651,11 +651,20 @@ async function renderAdmin(container){
     </div>`;
   }
 
-  else if(adminTab==='monitor'){
+ else if(adminTab==='monitor'){
     html += `<div class="panel">
       <h3>Registered but Not Yet Voted (${registeredNotVoted.length})</h3>
       <table><thead><tr><th>Name</th><th>ID</th><th>Username</th><th>Issued</th></tr></thead><tbody>
-      ${registeredNotVoted.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td class="mono">${s.username}</td><td>${s.issuedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="4" class="empty-note">Nobody in this state right now.</td></tr>`}
+      ${registeredNotVoted.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td class="mono">${s.username}</td><td>${s.issuedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="4" class="empty-note">None.</td></tr>`}
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <h3>Completed Voting (${votedList.length})</h3>
+      <table><thead><tr><th>Name</th><th>ID</th><th>Voted At</th></tr></thead><tbody>
+      ${votedList.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td>${s.votedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="3" class="empty-note">No votes cast yet.</td></tr>`}
+      </tbody></table>
+    </div>`;
+    ${registeredNotVoted.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td class="mono">${s.username}</td><td>${s.issuedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="4" class="empty-note">Nobody in this state right now.</td></tr>`}
       </tbody></table>
     </div>
     <div class="panel">
@@ -676,46 +685,83 @@ async function renderAdmin(container){
       <button class="btn btn-danger" onclick="resetElection()">Reset Credentials, Votes &amp; Attendance</button>
     </div>`;
   }
+  }
+  
 
   else if(adminTab==='results'){
-    html += `<div class="panel"><h3>Live Results</h3>`;
-    if(positions.length===0){ html += `<p class="empty-note">No candidates to show yet.</p>`; }
-    positions.forEach(pos=>{
-      const opts = candidates.filter(c=>c.position===pos);
-      const total = opts.reduce((s,c)=> s + (votes[c.id]||0), 0) || 1;
-      html += `<div style="margin-bottom:20px;"><div class="eyebrow" style="text-align:left;">${pos}</div>`;
-      opts.forEach(c=>{
-        const v = votes[c.id]||0;
-        const pct = Math.round((v/total)*100);
-        html += `<div class="bar-row"><div class="bar-label"><span>${c.name}</span><span class="mono">${v} votes</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
+    let resHtml = `<div class="panel"><h3>Live Election Results</h3>`;
+    if(positions.length === 0){
+      resHtml += `<p class="empty-note">No positions found.</p>`;
+    } else {
+      positions.forEach(pos=>{
+        const cands = candidates.filter(c=>c.position===pos);
+        const totalPosVotes = cands.reduce((sum, c)=>sum+(votes[c.id]||0), 0);
+        resHtml += `<h4 style="font-family:'Sora',sans-serif;margin:16px 0 10px;color:var(--text-1);">${pos}</h4>`;
+        cands.forEach(c=>{
+          const count = votes[c.id] || 0;
+          const pct = totalPosVotes > 0 ? Math.round((count / totalPosVotes) * 100) : 0;
+          resHtml += `
+            <div class="bar-row">
+              <div class="bar-label"><span>${c.name}</span><span class="mono">${count} votes (${pct}%)</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+            </div>`;
+        });
       });
-      html += `</div>`;
-    });
-    html += `</div>`;
+    }
+    resHtml += `</div>`;
+    html += resHtml;
   }
 
   html += `</div>`;
   container.innerHTML = html;
 
-  if(adminTab==='qr'){ setTimeout(renderQrCodes, 30); }
+  // Render QR Codes if on QR tab
+  if(adminTab === 'qr'){
+    const origin = location.origin + location.pathname;
+    const regUrl = origin + '?page=register';
+    const voteUrl = origin + '?page=vote';
+    const grid = document.getElementById('adminQrGrid');
+    if(grid){
+      grid.innerHTML = `
+        <div class="qr-tix">
+          <div class="qr-holder" id="qrRegBox"></div>
+          <div class="qlabel">Step 1: Get Credentials</div>
+          <div class="qdesc">Scan to register & receive username/password</div>
+        </div>
+        <div class="qr-tix">
+          <div class="qr-holder" id="qrVoteBox"></div>
+          <div class="qlabel">Step 2: Vote Login</div>
+          <div class="qdesc">Scan to log in and cast your vote</div>
+        </div>`;
+      document.getElementById('qrRegBox').innerHTML = '';
+      document.getElementById('qrVoteBox').innerHTML = '';
+      new QRCode(document.getElementById('qrRegBox'), { text: regUrl, width: 140, height: 140 });
+      new QRCode(document.getElementById('qrVoteBox'), { text: voteUrl, width: 140, height: 140 });
+    }
+  }
 }
 
 function tryAdminLogin(){
-  const val = document.getElementById('adminPassInput').value;
-  if(val === ADMIN_PASS){ adminAuthed = true; render(); }
-  else alert('Incorrect password.');
+  const pass = document.getElementById('adminPassInput').value;
+  if(pass === ADMIN_PASS){
+    adminAuthed = true;
+    render();
+  } else {
+    alert('Incorrect admin password.');
+  }
 }
 
 async function addCandidate(){
-  const pos = document.getElementById('candPos').value.trim();
+  const position = document.getElementById('candPos').value.trim();
   const name = document.getElementById('candName').value.trim();
   const slogan = document.getElementById('candSlogan').value.trim();
-  if(!pos || !name){ alert('Position and name are required.'); return; }
+  if(!position || !name){ alert('Position and Name are required.'); return; }
   const candidates = await loadJSON('candidates', []);
-  candidates.push({id: uid('c_'), position: pos, name, slogan});
+  candidates.push({ id: uid('c'), position, name, slogan });
   await saveJSON('candidates', candidates);
   render();
 }
+
 async function removeCandidate(id){
   let candidates = await loadJSON('candidates', []);
   candidates = candidates.filter(c=>c.id!==id);
@@ -724,26 +770,27 @@ async function removeCandidate(id){
 }
 
 async function bulkAddStudents(){
-  const raw = document.getElementById('bulkRoster').value;
-  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
-  if(lines.length===0) return;
+  const text = document.getElementById('bulkRoster').value.trim();
+  if(!text) return;
   const roster = await loadJSON('roster', []);
-  const existingIds = new Set(roster.map(s=>s.id));
+  const lines = text.split('\n');
   let added = 0;
   lines.forEach(line=>{
     const parts = line.split(',');
-    if(parts.length<2) return;
-    const name = parts[0].trim();
-    const id = parts.slice(1).join(',').trim();
-    if(!name || !id || existingIds.has(id)) return;
-    roster.push({id, name, username:null, password:null, issuedAt:null, voted:false, votedAt:null});
-    existingIds.add(id);
-    added++;
+    if(parts.length >= 2){
+      const name = parts[0].trim();
+      const id = parts[1].trim();
+      if(name && id && !roster.some(s=>s.id===id)){
+        roster.push({ name, id, username: null, password: null, voted: false });
+        added++;
+      }
+    }
   });
   await saveJSON('roster', roster);
-  alert(added + ' student(s) added.');
+  alert(`Successfully added ${added} student(s).`);
   render();
 }
+
 async function removeStudent(id){
   let roster = await loadJSON('roster', []);
   roster = roster.filter(s=>s.id!==id);
@@ -751,60 +798,35 @@ async function removeStudent(id){
   render();
 }
 
-async function resetElection(){
-  if(!confirm('Reset all issued credentials, votes, and attendance?')) return;
-  let roster = await loadJSON('roster', []);
-  roster = roster.map(s=>({...s, username:null, password:null, issuedAt:null, voted:false, votedAt:null}));
-  await saveJSON('roster', roster);
-  await saveJSON('votes', {});
-  render();
-}
-
-function renderQrCodes(){
-  const grid = document.getElementById('adminQrGrid');
-  if(!grid) return;
-  grid.innerHTML = '';
-  const base = location.origin + location.pathname;
-  const items = [
-    {url: base + '?page=register', label:'QR Code 1', desc:'Get Credentials'},
-    {url: base + '?page=vote', label:'QR Code 2', desc:'Vote Login'}
-  ];
-  items.forEach(it=>{
-    const cell = document.createElement('div');
-    cell.className = 'qr-tix';
-    const holder = document.createElement('div');
-    holder.className = 'qr-holder';
-    cell.appendChild(holder);
-    const lab = document.createElement('div');
-    lab.className = 'qlabel';
-    lab.textContent = it.label;
-    const desc = document.createElement('div');
-    desc.className = 'qdesc';
-    desc.textContent = it.desc;
-    cell.appendChild(lab);
-    cell.appendChild(desc);
-    grid.appendChild(cell);
-    new QRCode(holder, {text: it.url, width:140, height:140, colorDark:'#04060c', colorLight:'#ffffff'});
-  });
-}
-
 function printBothQR(){
-  const grid = document.getElementById('adminQrGrid');
-  const area = document.getElementById('qrPrintArea');
-  if(!grid) return;
-  area.innerHTML = '<h2 style="font-family:Sora,sans-serif;">Election Portal — QR Codes</h2><div class="qr-grid">' + grid.innerHTML + '</div>';
-  window.print();
+  const origin = location.origin + location.pathname;
+  const regUrl = origin + '?page=register';
+  const voteUrl = origin + '?page=vote';
+  const printArea = document.getElementById('qrPrintArea');
+  printArea.innerHTML = `
+    <div style="display:flex;justify-content:space-around;padding:40px;text-align:center;">
+      <div>
+        <div id="printReg" style="display:inline-block;padding:15px;background:#fff;"></div>
+        <h2>Step 1: Get Credentials</h2>
+        <p>Scan to verify ID and get password</p>
+      </div>
+      <div>
+        <div id="printVote" style="display:inline-block;padding:15px;background:#fff;"></div>
+        <h2>Step 2: Vote Login</h2>
+        <p>Scan to log in and cast vote</p>
+      </div>
+    </div>`;
+  new QRCode(document.getElementById('printReg'), { text: regUrl, width: 200, height: 200 });
+  new QRCode(document.getElementById('printVote'), { text: voteUrl, width: 200, height: 200 });
+  setTimeout(() => { window.print(); }, 400);
 }
 
-/* ================= ROOT RENDER ================= */
-async function render(){
+function render(){
   const app = document.getElementById('app');
-  if(mode==='admin'){
-    app.classList.add('wide');
-    await renderAdmin(app);
+  if(mode === 'admin'){
+    renderAdmin(app);
   } else {
-    app.classList.remove('wide');
-    await renderVoter(app);
+    renderVoter(app);
   }
 }
 </script>
