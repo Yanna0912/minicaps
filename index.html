@@ -69,7 +69,6 @@
   .navlink{background:none;border:none;color:var(--text-2);font-size:13.5px;font-weight:600;cursor:pointer;}
   .navlink:hover{color:var(--text-1);}
 
-  /* glass card */
   .card{
     background:var(--card-glass);
     border:1px solid var(--card-border);
@@ -142,7 +141,6 @@
   .suggest-list{margin-top:2px;}
   .empty-note{color:var(--text-3);font-size:13px;text-align:center;padding:10px 0;}
 
-  /* voting */
   .position-block{margin-bottom:24px;}
   .position-block h3{font-size:15.5px;margin:0 0 12px;display:flex;align-items:center;gap:8px;color:var(--text-1);}
   .position-block .count{font-size:10.5px;background:rgba(255,255,255,.08);color:var(--text-2);padding:2px 9px;border-radius:999px;font-family:'Inter',sans-serif;font-weight:600;}
@@ -158,7 +156,6 @@
   .cand-name{font-weight:600;font-size:14.5px;}
   .cand-slogan{font-size:12.5px;color:var(--text-2);margin-top:1px;}
 
-  /* home choice */
   .choice-card{
     display:block;width:100%;text-align:left;background:rgba(255,255,255,.05);
     border:1px solid var(--input-border);border-radius:18px;padding:20px;margin-bottom:12px;cursor:pointer;
@@ -167,7 +164,6 @@
   .choice-card .ct{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px;}
   .choice-card .cd{font-size:13px;color:var(--text-2);}
 
-  /* admin */
   .adm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
   .adm-tabs button{
     border:1px solid var(--input-border);background:rgba(255,255,255,.05);padding:8px 15px;border-radius:999px;
@@ -225,7 +221,7 @@
 
 <div class="topbar">
   <div class="brand" onclick="goHome()">
-    <img src = "cropped-ccdilogo.png" width = "40px" height = "40px"   >
+    <img src="cropped-ccdilogo.png" width="40px" height="40px">
     <div class="name">Election Portal</div>
   </div>
   <button class="navlink" id="adminNavBtn" onclick="setMode('admin')">Committee Admin</button>
@@ -235,8 +231,6 @@
 <div id="qrPrintArea"></div>
 
 <script>
-/* ---------------- storage helpers ---------------- */
-
 const API_URL = 'https://ccdi-election-backend.onrender.com/api';
 
 async function loadJSON(key, fallback){
@@ -264,16 +258,16 @@ async function saveJSON(key, value){
     return false; 
   }
 }
-/* ---------------- state ---------------- */
+
 let mode = 'voter';
-let page = 'home'; // home | register | vote-login | ballot | confirm | done | locked
+let page = 'home';
 let selections = {};
 let currentStudent = null;
-let issuedCreds = null; // {username, password} just generated, shown once
+let issuedCreds = null;
 let adminAuthed = false;
 let adminTab = 'candidates';
 
-const ADMIN_PASS = 'erwin123'; // demo-only client-side gate
+const ADMIN_PASS = 'erwin123';
 
 function uid(prefix){ return prefix + Math.random().toString(36).slice(2,8); }
 function nowStamp(){
@@ -290,7 +284,6 @@ function setMode(m){
   render();
 }
 
-/* ---------------- boot: read ?page= param ---------------- */
 window.addEventListener('DOMContentLoaded', ()=>{
   const params = new URLSearchParams(location.search);
   const p = params.get('page');
@@ -300,7 +293,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
   render();
 });
 
-/* ================= CREDENTIAL GENERATION ================= */
 function generateUniqueCredentials(roster, name, id){
   const usedUsernames = new Set(roster.filter(s=>s.username).map(s=>s.username));
   const usedPasswords = new Set(roster.filter(s=>s.password).map(s=>s.password));
@@ -316,7 +308,6 @@ function generateUniqueCredentials(roster, name, id){
   return {username, password};
 }
 
-/* ================= REGISTER (get credentials) ================= */
 async function submitRegister(){
   const name = document.getElementById('regName').value.trim();
   const id = document.getElementById('regId').value.trim();
@@ -352,7 +343,6 @@ async function submitRegister(){
   render();
 }
 
-/* ================= VOTE LOGIN ================= */
 async function submitVoteLogin(){
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value.trim();
@@ -378,7 +368,6 @@ async function submitVoteLogin(){
   render();
 }
 
-/* ================= BALLOT ================= */
 async function submitVote(){
   const positions = [...new Set((await loadJSON('candidates',[])).map(c=>c.position))];
   const missing = positions.filter(p=>!selections[p]);
@@ -417,9 +406,7 @@ function resetFlow(){
   render();
 }
 
-/* ================= VOTER RENDER ================= */
 async function renderVoter(container){
-
   if(page === 'home'){
     container.innerHTML = `
       <div class="card">
@@ -435,9 +422,7 @@ async function renderVoter(container){
           <div class="cd">Already have your credentials? Log in here to cast your vote.</div>
         </div>
       </div>`;
-  }
-
-  else if(page === 'register'){
+  } else if(page === 'register'){
     container.innerHTML = `
       <div class="card">
         <div class="eyebrow">Step 1 of 2</div>
@@ -449,9 +434,7 @@ async function renderVoter(container){
         <button class="btn btn-primary" onclick="submitRegister()">Get My Credentials</button>
         <div class="link-line">Already have credentials? <button class="linklike" onclick="page='vote-login';render();">Log in to vote</button></div>
       </div>`;
-  }
-
-  else if(page === 'credentials-issued'){
+  } else if(page === 'credentials-issued'){
     container.innerHTML = `
       <div class="card">
         <div class="eyebrow">Success</div>
@@ -465,19 +448,15 @@ async function renderVoter(container){
         <button class="btn btn-primary" onclick="page='vote-login';render();">Continue to Vote Login</button>
         <div class="link-line">You can also come back to this device's scan link later.</div>
       </div>`;
-  }
-
-  else if(page === 'already-voted-info'){
+  } else if(page === 'already-voted-info'){
     container.innerHTML = `
       <div class="card">
         <div class="badge-ring locked">ALREADY<br>VOTED</div>
-        <h2 class="center" style="text-align:center;">${currentStudent.name}</h2>
+        <h2 style="text-align:center;">${currentStudent.name}</h2>
         <p class="sub">This student has already voted${currentStudent.votedAt? ' on '+currentStudent.votedAt:''}. Credentials cannot be reissued.</p>
         <button class="btn btn-ghost" onclick="resetFlow()">Back</button>
       </div>`;
-  }
-
-  else if(page === 'vote-login'){
+  } else if(page === 'vote-login'){
     container.innerHTML = `
       <div class="card">
         <div class="eyebrow">Step 2 of 2</div>
@@ -490,9 +469,7 @@ async function renderVoter(container){
         <button class="btn btn-primary" onclick="submitVoteLogin()">Log in</button>
         <div class="link-line">Don't have an account? <button class="linklike" onclick="page='register';render();">Get your credentials</button></div>
       </div>`;
-  }
-
-  else if(page === 'ballot'){
+  } else if(page === 'ballot'){
     const candidates = await loadJSON('candidates', []);
     if(candidates.length===0){
       container.innerHTML = `<div class="card"><div class="eyebrow">Ballot</div><h2>No Candidates Yet</h2><p class="sub">Ask the election committee to add candidates first.</p></div>`;
@@ -515,9 +492,7 @@ async function renderVoter(container){
     });
     html += `<button class="btn btn-primary" onclick="submitVote()">Submit My Vote</button></div>`;
     container.innerHTML = html;
-  }
-
-  else if(page === 'confirm'){
+  } else if(page === 'confirm'){
     const candidates = await loadJSON('candidates', []);
     let rows = Object.entries(selections).map(([pos,cid])=>{
       const c = candidates.find(x=>x.id===cid);
@@ -534,9 +509,7 @@ async function renderVoter(container){
           <button class="btn btn-primary" onclick="finalizeVote()">Submit</button>
         </div>
       </div>`;
-  }
-
-  else if(page === 'done'){
+  } else if(page === 'done'){
     container.innerHTML = `
       <div class="card">
         <div class="badge-ring">VOTED<br>✓</div>
@@ -549,9 +522,7 @@ async function renderVoter(container){
         <p class="note center" style="text-align:center;">This account can no longer be used to log in.</p>
         <button class="btn btn-ghost" onclick="resetFlow()">Done — Hand back device</button>
       </div>`;
-  }
-
-  else if(page === 'locked'){
+  } else if(page === 'locked'){
     container.innerHTML = `
       <div class="card">
         <div class="badge-ring locked">ACCESS<br>DENIED</div>
@@ -564,7 +535,6 @@ async function renderVoter(container){
 
 function pickCandidate(pos, cid){ selections[pos] = cid; render(); }
 
-/* ================= ADMIN ================= */
 function setAdminTab(t){ adminTab = t; render(); }
 
 async function renderAdmin(container){
@@ -576,7 +546,6 @@ async function renderAdmin(container){
         <p class="sub">Restricted to election committee members.</p>
         <div class="field"><input type="password" id="adminPassInput" placeholder="Admin password"></div>
         <button class="btn btn-primary" onclick="tryAdminLogin()">Enter</button>
-        <p class="note" style="text-align:center;">
       </div>`;
     return;
   }
@@ -620,9 +589,7 @@ async function renderAdmin(container){
       ${candidates.map(c=>`<tr><td>${c.position}</td><td>${c.name}</td><td>${c.slogan||'—'}</td><td><button class="tiny-btn" onclick="removeCandidate('${c.id}')">Remove</button></td></tr>`).join('') || `<tr><td colspan="4" class="empty-note">No candidates yet.</td></tr>`}
       </tbody></table>
     </div>`;
-  }
-
-  else if(adminTab==='roster'){
+  } else if(adminTab==='roster'){
     html += `<div class="panel">
       <h3>Import Students</h3>
       <p class="note">One line per student: <span class="mono">Full Name, Student ID</span></p>
@@ -634,9 +601,7 @@ async function renderAdmin(container){
       ${roster.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td class="mono">${s.username||'—'}</td><td>${s.voted?`<span class="pill ok">Voted</span>`:(s.username?`<span class="pill mid">Issued, not voted</span>`:`<span class="pill no">Not registered</span>`)}</td><td><button class="tiny-btn" onclick="removeStudent('${s.id}')">Remove</button></td></tr>`).join('') || `<tr><td colspan="5" class="empty-note">No students yet.</td></tr>`}
       </tbody></table>
     </div>`;
-  }
-
-  else if(adminTab==='qr'){
+  } else if(adminTab==='qr'){
     html += `<div class="panel">
       <h3>QR Code 1 — Get Credentials</h3>
       <p class="note">Post this where students check in. Scanning it opens the name + ID form so each student can claim their one-time username and password.</p>
@@ -649,9 +614,7 @@ async function renderAdmin(container){
       <button class="btn btn-primary" onclick="printBothQR()">🖨️ Print Both QR Codes</button>
       <div class="qr-grid" id="adminQrGrid" style="margin-top:18px;"></div>
     </div>`;
-  }
-
- else if(adminTab==='monitor'){
+  } else if(adminTab==='monitor'){
     html += `<div class="panel">
       <h3>Registered but Not Yet Voted (${registeredNotVoted.length})</h3>
       <table><thead><tr><th>Name</th><th>ID</th><th>Username</th><th>Issued</th></tr></thead><tbody>
@@ -664,81 +627,84 @@ async function renderAdmin(container){
       ${votedList.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td>${s.votedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="3" class="empty-note">No votes cast yet.</td></tr>`}
       </tbody></table>
     </div>`;
-    ${registeredNotVoted.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td class="mono">${s.username}</td><td>${s.issuedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="4" class="empty-note">Nobody in this state right now.</td></tr>`}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h3>Not Yet Registered (${notRegistered.length})</h3>
-      <table><thead><tr><th>Name</th><th>ID</th></tr></thead><tbody>
-      ${notRegistered.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td></tr>`).join('') || `<tr><td colspan="2" class="empty-note">Everyone has registered.</td></tr>`}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h3>Voted / Attendance (${votedList.length})</h3>
-      <table><thead><tr><th>Name</th><th>ID</th><th>Time</th></tr></thead><tbody>
-      ${votedList.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td>${s.votedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="3" class="empty-note">No one has voted yet.</td></tr>`}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h3>Reset Election</h3>
-      <p class="note">Clears all issued credentials, votes, and attendance. Roster and candidates stay intact.</p>
-      <button class="btn btn-danger" onclick="resetElection()">Reset Credentials, Votes &amp; Attendance</button>
-    </div>`;
-  }
-  }
-  
-
-  else if(adminTab==='results'){
-    let resHtml = `<div class="panel"><h3>Live Election Results</h3>`;
-    if(positions.length === 0){
-      resHtml += `<p class="empty-note">No positions found.</p>`;
+  } else if(adminTab==='results'){
+    html += `<div class="panel"><h3>Live Election Results</h3>`;
+    if(positions.length===0){
+      html += `<p class="empty-note">No positions configured yet.</p>`;
     } else {
       positions.forEach(pos=>{
-        const cands = candidates.filter(c=>c.position===pos);
-        const totalPosVotes = cands.reduce((sum, c)=>sum+(votes[c.id]||0), 0);
-        resHtml += `<h4 style="font-family:'Sora',sans-serif;margin:16px 0 10px;color:var(--text-1);">${pos}</h4>`;
-        cands.forEach(c=>{
-          const count = votes[c.id] || 0;
-          const pct = totalPosVotes > 0 ? Math.round((count / totalPosVotes) * 100) : 0;
-          resHtml += `
+        const opts = candidates.filter(c=>c.position===pos);
+        const totalVotesForPos = opts.reduce((sum, c)=>sum+(votes[c.id]||0), 0);
+        html += `<div style="margin-bottom:20px;"><h4 style="font-size:14.5px;margin:0 0 10px;color:var(--text-1);">${pos} <span style="font-size:11px;color:var(--text-3);font-weight:normal;">(${totalVotesForPos} total votes)</span></h4>`;
+        opts.forEach(c=>{
+          const count = votes[c.id]||0;
+          const pct = totalVotesForPos > 0 ? Math.round((count/totalVotesForPos)*100) : 0;
+          html += `
             <div class="bar-row">
-              <div class="bar-label"><span>${c.name}</span><span class="mono">${count} votes (${pct}%)</span></div>
+              <div class="bar-label"><span><strong>${c.name}</strong> ${c.slogan?`(${c.slogan})`:''}</span><span class="mono">${count} votes (${pct}%)</span></div>
               <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
             </div>`;
         });
+        html += `</div>`;
       });
     }
-    resHtml += `</div>`;
-    html += resHtml;
+    html += `</div>`;
   }
 
   html += `</div>`;
   container.innerHTML = html;
 
-  // Render QR Codes if on QR tab
   if(adminTab === 'qr'){
-    const origin = location.origin + location.pathname;
-    const regUrl = origin + '?page=register';
-    const voteUrl = origin + '?page=vote';
-    const grid = document.getElementById('adminQrGrid');
-    if(grid){
-      grid.innerHTML = `
-        <div class="qr-tix">
-          <div class="qr-holder" id="qrRegBox"></div>
-          <div class="qlabel">Step 1: Get Credentials</div>
-          <div class="qdesc">Scan to register & receive username/password</div>
-        </div>
-        <div class="qr-tix">
-          <div class="qr-holder" id="qrVoteBox"></div>
-          <div class="qlabel">Step 2: Vote Login</div>
-          <div class="qdesc">Scan to log in and cast your vote</div>
-        </div>`;
-      document.getElementById('qrRegBox').innerHTML = '';
-      document.getElementById('qrVoteBox').innerHTML = '';
-      new QRCode(document.getElementById('qrRegBox'), { text: regUrl, width: 140, height: 140 });
-      new QRCode(document.getElementById('qrVoteBox'), { text: voteUrl, width: 140, height: 140 });
-    }
+    renderQRCodesToContainer();
   }
+}
+
+function renderQRCodesToContainer(){
+  const grid = document.getElementById('adminQrGrid');
+  if(!grid) return;
+  const regUrl = location.origin + location.pathname + '?page=register';
+  const voteUrl = location.origin + location.pathname + '?page=vote';
+  grid.innerHTML = `
+    <div class="qr-tix">
+      <div class="qr-holder" id="qrRegBox"></div>
+      <div class="qlabel">Step 1: Get Credentials</div>
+      <div class="qdesc">Scan to enter Name &amp; ID</div>
+    </div>
+    <div class="qr-tix">
+      <div class="qr-holder" id="qrVoteBox"></div>
+      <div class="qlabel">Step 2: Vote Login</div>
+      <div class="qdesc">Scan to log in &amp; cast vote</div>
+    </div>`;
+  new QRCode(document.getElementById('qrRegBox'), { text: regUrl, width: 140, height: 140 });
+  new QRCode(document.getElementById('qrVoteBox'), { text: voteUrl, width: 140, height: 140 });
+}
+
+function printBothQR(){
+  const printArea = document.getElementById('qrPrintArea');
+  const regUrl = location.origin + location.pathname + '?page=register';
+  const voteUrl = location.origin + location.pathname + '?page=vote';
+  printArea.innerHTML = `
+    <div style="text-align:center;font-family:sans-serif;padding:20px;">
+      <h2 style="margin-bottom:5px;">CCDI Election Portal</h2>
+      <p style="color:#666;margin-bottom:30px;">Scan the appropriate QR code using your mobile phone camera.</p>
+      <div style="display:flex;justify-content:center;gap:40px;flex-wrap:wrap;">
+        <div style="border:2px solid #ccc;border-radius:16px;padding:24px;width:280px;text-align:center;">
+          <div id="printRegQR" style="display:inline-block;background:#fff;padding:10px;"></div>
+          <h3 style="margin:15px 0 5px;">Step 1: Get Credentials</h3>
+          <p style="font-size:12px;color:#555;">Scan to enter your Name &amp; Student ID to receive your login code.</p>
+          <p style="font-size:10px;color:#888;word-break:break-all;margin-top:10px;">${regUrl}</p>
+        </div>
+        <div style="border:2px solid #ccc;border-radius:16px;padding:24px;width:280px;text-align:center;">
+          <div id="printVoteQR" style="display:inline-block;background:#fff;padding:10px;"></div>
+          <h3 style="margin:15px 0 5px;">Step 2: Vote Login</h3>
+          <p style="font-size:12px;color:#555;">Scan to log in with your credentials and submit your ballot.</p>
+          <p style="font-size:10px;color:#888;word-break:break-all;margin-top:10px;">${voteUrl}</p>
+        </div>
+      </div>
+    </div>`;
+  new QRCode(document.getElementById('printRegQR'), { text: regUrl, width: 180, height: 180 });
+  new QRCode(document.getElementById('printVoteQR'), { text: voteUrl, width: 180, height: 180 });
+  setTimeout(()=>{ window.print(); }, 400);
 }
 
 function tryAdminLogin(){
@@ -755,9 +721,9 @@ async function addCandidate(){
   const position = document.getElementById('candPos').value.trim();
   const name = document.getElementById('candName').value.trim();
   const slogan = document.getElementById('candSlogan').value.trim();
-  if(!position || !name){ alert('Position and Name are required.'); return; }
+  if(!position || !name){ alert('Position and Candidate Name are required.'); return; }
   const candidates = await loadJSON('candidates', []);
-  candidates.push({ id: uid('c'), position, name, slogan });
+  candidates.push({ id: uid('c_'), position, name, slogan });
   await saveJSON('candidates', candidates);
   render();
 }
@@ -774,20 +740,20 @@ async function bulkAddStudents(){
   if(!text) return;
   const roster = await loadJSON('roster', []);
   const lines = text.split('\n');
-  let added = 0;
+  let addedCount = 0;
   lines.forEach(line=>{
     const parts = line.split(',');
     if(parts.length >= 2){
       const name = parts[0].trim();
       const id = parts[1].trim();
       if(name && id && !roster.some(s=>s.id===id)){
-        roster.push({ name, id, username: null, password: null, voted: false });
-        added++;
+        roster.push({ id, name, username: '', password: '', voted: false, issuedAt: '', votedAt: '' });
+        addedCount++;
       }
     }
   });
   await saveJSON('roster', roster);
-  alert(`Successfully added ${added} student(s).`);
+  alert(`Successfully added ${addedCount} student(s).`);
   render();
 }
 
@@ -798,29 +764,6 @@ async function removeStudent(id){
   render();
 }
 
-function printBothQR(){
-  const origin = location.origin + location.pathname;
-  const regUrl = origin + '?page=register';
-  const voteUrl = origin + '?page=vote';
-  const printArea = document.getElementById('qrPrintArea');
-  printArea.innerHTML = `
-    <div style="display:flex;justify-content:space-around;padding:40px;text-align:center;">
-      <div>
-        <div id="printReg" style="display:inline-block;padding:15px;background:#fff;"></div>
-        <h2>Step 1: Get Credentials</h2>
-        <p>Scan to verify ID and get password</p>
-      </div>
-      <div>
-        <div id="printVote" style="display:inline-block;padding:15px;background:#fff;"></div>
-        <h2>Step 2: Vote Login</h2>
-        <p>Scan to log in and cast vote</p>
-      </div>
-    </div>`;
-  new QRCode(document.getElementById('printReg'), { text: regUrl, width: 200, height: 200 });
-  new QRCode(document.getElementById('printVote'), { text: voteUrl, width: 200, height: 200 });
-  setTimeout(() => { window.print(); }, 400);
-}
-
 function render(){
   const app = document.getElementById('app');
   if(mode === 'admin'){
@@ -829,6 +772,8 @@ function render(){
     renderVoter(app);
   }
 }
+
+render();
 </script>
 </body>
 </html>
