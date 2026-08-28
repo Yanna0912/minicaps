@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Election Portal — Student Voting System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#04060c;
+    --bg-glow-a:#0d1a33;
+    --bg-glow-b:#1a2a4d;
+    --card-glass:rgba(255,255,255,0.055);
+    --card-border:rgba(255,255,255,0.14);
+    --text-1:#F3F6FA;
+    --text-2:rgba(243,246,250,0.62);
+    --text-3:rgba(243,246,250,0.4);
+    --input-bg:rgba(255,255,255,0.07);
+    --input-border:rgba(255,255,255,0.12);
+    --teal:#213bce;
+    --teal-2:#149E8C;
+    --danger:#FF6B6B;
+    --danger-bg:rgba(255,107,107,0.12);
+    --warn:#FFC857;
+    --warn-bg:rgba(255,200,87,0.12);
+    --ok-bg:rgba(34,195,174,0.14);
+    --radius-card:28px;
+    --radius-in:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background-color:var(--bg-deep);
+    background-image:
+      radial-gradient(1.6px 1.6px at 10% 12%, rgba(255,255,255,.85), transparent),
+      radial-gradient(1.2px 1.2px at 32% 68%, rgba(255,255,255,.6), transparent),
+      radial-gradient(1.6px 1.6px at 58% 22%, rgba(255,255,255,.7), transparent),
+      radial-gradient(1.2px 1.2px at 74% 78%, rgba(255,255,255,.55), transparent),
+      radial-gradient(1.6px 1.6px at 88% 40%, rgba(255,255,255,.8), transparent),
+      radial-gradient(1.2px 1.2px at 20% 88%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1.4px 1.4px at 46% 8%, rgba(255,255,255,.65), transparent),
+      radial-gradient(1.2px 1.2px at 66% 55%, rgba(255,255,255,.5), transparent),
+      radial-gradient(900px 900px at 82% 96%, var(--bg-glow-b), transparent 60%),
+      radial-gradient(700px 700px at 84% 100%, var(--bg-glow-a), transparent 55%);
+    background-repeat:no-repeat;
+    font-family:'Inter',sans-serif;
+    color:var(--text-1);
+    padding:26px 16px 70px;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  h1,h2,h3,.display{font-family:'Sora',sans-serif;}
+  .wrap{max-width:440px;margin:0 auto;}
+  .wrap.wide{max-width:1000px;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    max-width:1000px;margin:0 auto 26px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .brand .dot{
+    width:34px;height:34px;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #6be8da, var(--teal) 55%, var(--teal-2) 100%);
+    box-shadow:0 0 18px rgba(34,195,174,.55);
+  }
+  .brand .name{font-family:'Sora',sans-serif;font-weight:700;font-size:16.5px;letter-spacing:.01em;}
+  .navlink{background:none;border:none;color:var(--text-2);font-size:13.5px;font-weight:600;cursor:pointer;}
+  .navlink:hover{color:var(--text-1);}
+
+  /* glass card */
+  .card{
+    background:var(--card-glass);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-card);
+    backdrop-filter:blur(22px);
+    -webkit-backdrop-filter:blur(22px);
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);
+    padding:34px 30px 30px;
+    margin-bottom:18px;
+  }
+  .eyebrow{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);
+    font-weight:700;margin-bottom:10px;text-align:center;
+  }
+  .card h2{font-size:24px;margin:0 0 6px;font-weight:700;text-align:center;}
+  .card p.sub{color:var(--text-2);margin:0 0 26px;font-size:14px;text-align:center;line-height:1.5;}
+
+  label.field-label{font-size:12.5px;font-weight:600;color:var(--text-2);display:block;margin-bottom:7px;}
+  .field{margin-bottom:14px;}
+  input[type=text], input[type=password]{
+    width:100%;padding:15px 20px;border-radius:999px;border:1px solid var(--input-border);
+    background:var(--input-bg);font-family:'Inter',sans-serif;font-size:14.5px;color:var(--text-1);
+    outline:none;transition:.15s;
+  }
+  input::placeholder{color:var(--text-3);}
+  input:focus{border-color:var(--teal);background:rgba(255,255,255,.1);}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:15px 22px;border-radius:999px;border:none;cursor:pointer;
+    font-family:'Inter',sans-serif;font-weight:700;font-size:14.5px;
+    transition:.15s; width:100%;
+  }
+  .btn-primary{background:linear-gradient(180deg, var(--teal), var(--teal-2));color:#04150f;box-shadow:0 10px 26px -10px rgba(34,195,174,.65);}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-primary:disabled{background:#3a4150;color:#8b93a3;box-shadow:none;cursor:not-allowed;}
+  .btn-ghost{background:rgba(255,255,255,.06);color:var(--text-1);border:1px solid var(--input-border);}
+  .btn-ghost:hover{background:rgba(255,255,255,.1);}
+  .btn-danger{background:var(--danger);color:#2b0808;}
+  .btn-row{display:flex;gap:10px;}
+  .link-line{text-align:center;margin-top:18px;font-size:13px;color:var(--text-2);}
+  .link-line a, .link-line button.linklike{color:var(--teal);text-decoration:none;background:none;border:none;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+
+  .divider{border-top:1px solid var(--card-border);margin:22px 0;}
+
+  .msg-box{border-radius:14px;padding:13px 16px;font-size:13.5px;margin-bottom:16px;line-height:1.5;}
+  .msg-box.error{background:var(--danger-bg);color:#ffb3b3;}
+  .msg-box.warn{background:var(--warn-bg);color:#ffdf9e;}
+  .msg-box.ok{background:var(--ok-bg);color:#8ff0e0;}
+
+  .cred-box{
+    background:rgba(0,0,0,.35);border:1px solid var(--card-border);border-radius:16px;padding:18px 20px;margin:6px 0 20px;
+  }
+  .cred-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+  .cred-row:last-child{border-bottom:none;}
+  .cred-row .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);}
+  .cred-row .v{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:var(--text-1);letter-spacing:.02em;}
+
+  .badge-ring{
+    width:120px;height:120px;border-radius:50%;margin:4px auto 18px;
+    border:3px solid var(--teal);color:var(--teal);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-family:'Sora',sans-serif;font-weight:700;font-size:14px;line-height:1.2;
+    box-shadow:0 0 30px rgba(34,195,174,.35), inset 0 0 20px rgba(34,195,174,.12);
+    transform:scale(0);animation:ringIn .45s cubic-bezier(.2,1.5,.4,1) forwards;
+  }
+  .badge-ring.locked{border-color:var(--danger);color:var(--danger);box-shadow:0 0 30px rgba(255,107,107,.3), inset 0 0 20px rgba(255,107,107,.1);}
+  @keyframes ringIn{to{transform:scale(1);}}
+
+  .suggest-list{margin-top:2px;}
+  .empty-note{color:var(--text-3);font-size:13px;text-align:center;padding:10px 0;}
+
+  /* voting */
+  .position-block{margin-bottom:24px;}
+  .position-block h3{font-size:15.5px;margin:0 0 12px;display:flex;align-items:center;gap:8px;color:var(--text-1);}
+  .position-block .count{font-size:10.5px;background:rgba(255,255,255,.08);color:var(--text-2);padding:2px 9px;border-radius:999px;font-family:'Inter',sans-serif;font-weight:600;}
+  .cand-card{
+    display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:14px;
+    border:1px solid var(--input-border);margin-bottom:8px;cursor:pointer;background:rgba(255,255,255,.04);transition:.15s;
+  }
+  .cand-card:hover{border-color:var(--teal);}
+  .cand-card.selected{border-color:var(--teal);background:rgba(34,195,174,.1);}
+  .cand-radio{width:19px;height:19px;border-radius:50%;border:2px solid var(--text-3);flex:0 0 auto;position:relative;}
+  .cand-card.selected .cand-radio{border-color:var(--teal);}
+  .cand-card.selected .cand-radio::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--teal);}
+  .cand-name{font-weight:600;font-size:14.5px;}
+  .cand-slogan{font-size:12.5px;color:var(--text-2);margin-top:1px;}
+
+  /* home choice */
+  .choice-card{
+    display:block;width:100%;text-align:left;background:rgba(255,255,255,.05);
+    border:1px solid var(--input-border);border-radius:18px;padding:20px;margin-bottom:12px;cursor:pointer;
+  }
+  .choice-card:hover{border-color:var(--teal);}
+  .choice-card .ct{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px;}
+  .choice-card .cd{font-size:13px;color:var(--text-2);}
+
+  /* admin */
+  .adm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+  .adm-tabs button{
+    border:1px solid var(--input-border);background:rgba(255,255,255,.05);padding:8px 15px;border-radius:999px;
+    font-weight:600;font-size:12.5px;color:var(--text-2);cursor:pointer;
+  }
+  .adm-tabs button.active{background:var(--teal);color:#04150f;border-color:var(--teal);}
+  .panel{background:var(--card-glass);border:1px solid var(--card-border);border-radius:22px;backdrop-filter:blur(16px);padding:24px 26px;margin-bottom:16px;}
+  .panel h3{margin:0 0 14px;font-size:17px;font-family:'Sora',sans-serif;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:6px;}
+  .stat-box{background:rgba(255,255,255,.05);border:1px solid var(--input-border);border-radius:14px;padding:14px 16px;}
+  .stat-box .num{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;}
+  .stat-box .lab{font-size:11.5px;color:var(--text-2);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);padding:9px 10px;border-bottom:1px solid var(--card-border);}
+  td{padding:10px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle;color:var(--text-1);}
+  tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+  .pill.ok{background:var(--ok-bg);color:#7ee9d9;}
+  .pill.no{background:var(--danger-bg);color:#ff9d9d;}
+  .pill.mid{background:var(--warn-bg);color:#ffd684;}
+  .tiny-btn{padding:6px 11px;font-size:11.5px;border-radius:8px;border:1px solid var(--input-border);background:rgba(255,255,255,.05);cursor:pointer;color:var(--text-2);font-weight:600;}
+  .tiny-btn:hover{border-color:var(--teal);color:var(--teal);}
+  textarea{
+    width:100%;min-height:100px;border-radius:14px;border:1px solid var(--input-border);
+    padding:12px 16px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;resize:vertical;
+    background:var(--input-bg);color:var(--text-1);
+  }
+  .bar-row{margin-bottom:12px;}
+  .bar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;}
+  .bar-track{height:9px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal-2));border-radius:999px;transition:width .5s;}
+  .note{font-size:12px;color:var(--text-3);margin-top:6px;line-height:1.5;}
+  .qr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+  .qr-tix{border:1px solid var(--card-border);border-radius:16px;padding:20px;text-align:center;background:rgba(255,255,255,.05);}
+  .qr-tix .qr-holder{background:#fff;display:inline-block;padding:10px;border-radius:12px;}
+  .qr-tix .qlabel{font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;margin-top:12px;}
+  .qr-tix .qdesc{font-size:12px;color:var(--text-2);margin-top:2px;}
+  #qrPrintArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #qrPrintArea, #qrPrintArea *{visibility:visible;}
+    #qrPrintArea{display:block;position:absolute;top:0;left:0;width:100%;background:#fff;color:#000;padding:20px;}
+    .qr-tix{page-break-inside:avoid;border-color:#ccc;background:#fff;color:#000;}
+    .qlabel,.qdesc{color:#000;}
+  }
+  @media (max-width:560px){
+    .grid-2, .grid-3{grid-template-columns:1fr;}
+    .qr-grid{grid-template-columns:1fr;}
+    .topbar{flex-direction:row;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand" onclick="goHome()">
+    <img src = "cropped-ccdilogo.png" width = "40px" height = "40px"   >
+    <div class="name">Election Portal</div>
+  </div>
+  <button class="navlink" id="adminNavBtn" onclick="setMode('admin')">Committee Admin</button>
+</div>
+
+<div id="app" class="wrap"></div>
+<div id="qrPrintArea"></div>
+
+<script>
+/* ---------------- storage helpers ---------------- */
+
+async function loadJSON(key, fallback){
+  try{
+    const val = localStorage.getItem(key);
+    return val ? JSON.parse(val) : fallback;
+  }catch(e){ return fallback; }
+}
+
+async function saveJSON(key, value){
+  try{ 
+    localStorage.setItem(key, JSON.stringify(value)); 
+    return true; 
+  }
+  catch(e){ 
+    console.error('storage error', e); 
+    return false; 
+  }
+}
+
+/* ---------------- state ---------------- */
+let mode = 'voter';
+let page = 'home'; // home | register | vote-login | ballot | confirm | done | locked
+let selections = {};
+let currentStudent = null;
+let issuedCreds = null; // {username, password} just generated, shown once
+let adminAuthed = false;
+let adminTab = 'candidates';
+
+const ADMIN_PASS = 'admin123'; // demo-only client-side gate
+
+function uid(prefix){ return prefix + Math.random().toString(36).slice(2,8); }
+function nowStamp(){
+  const d = new Date();
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+function norm(s){ return (s||'').trim().toLowerCase(); }
+
+function goHome(){ mode='voter'; page='home'; render(); }
+function setMode(m){
+  mode = m;
+  document.getElementById('adminNavBtn').textContent = m==='admin' ? 'Voter View' : 'Committee Admin';
+  document.getElementById('adminNavBtn').onclick = ()=> setMode(m==='admin' ? 'voter' : 'admin');
+  render();
+}
+
+/* ---------------- boot: read ?page= param ---------------- */
+window.addEventListener('DOMContentLoaded', ()=>{
+  const params = new URLSearchParams(location.search);
+  const p = params.get('page');
+  if(p === 'register' || p === 'vote'){
+    page = (p === 'vote') ? 'vote-login' : 'register';
+  }
+  render();
+});
+
+/* ================= CREDENTIAL GENERATION ================= */
+function generateUniqueCredentials(roster, name, id){
+  const usedUsernames = new Set(roster.filter(s=>s.username).map(s=>s.username));
+  const usedPasswords = new Set(roster.filter(s=>s.password).map(s=>s.password));
+  const base = (name.trim().split(' ')[0] || 'voter').toLowerCase().replace(/[^a-z]/g,'') || 'voter';
+  const idDigits = (id.match(/[0-9]/g) || []).join('').slice(-4) || Math.floor(1000+Math.random()*9000).toString();
+  let username = base + idDigits;
+  let n = 1;
+  while(usedUsernames.has(username)){ username = base + idDigits + n; n++; }
+  let password;
+  do{
+    password = Math.random().toString(36).slice(2,5) + Math.floor(10 + Math.random()*89);
+  } while(usedPasswords.has(password));
+  return {username, password};
+}
+
+/* ================= REGISTER (get credentials) ================= */
+async function submitRegister(){
+  const name = document.getElementById('regName').value.trim();
+  const id = document.getElementById('regId').value.trim();
+  const errBox = document.getElementById('regMsg');
+  errBox.innerHTML = '';
+  if(!name || !id){ errBox.innerHTML = `<div class="msg-box error">Please enter both your full name and student ID.</div>`; return; }
+
+  const roster = await loadJSON('roster', []);
+  const match = roster.find(s => norm(s.name)===norm(name) && norm(s.id)===norm(id));
+  if(!match){
+    errBox.innerHTML = `<div class="msg-box error">We couldn't find a matching student record. Please check your name and ID, or contact the election committee.</div>`;
+    return;
+  }
+  if(match.voted){
+    currentStudent = match;
+    page = 'already-voted-info';
+    render();
+    return;
+  }
+  if(match.username){
+    errBox.innerHTML = `<div class="msg-box warn">You already have voting credentials on file. For security we don't display them again here — if you lost them, please see the election committee to verify your identity.</div>`;
+    return;
+  }
+  const creds = generateUniqueCredentials(roster, match.name, match.id);
+  const idx = roster.findIndex(s=>s.id===match.id);
+  roster[idx].username = creds.username;
+  roster[idx].password = creds.password;
+  roster[idx].issuedAt = nowStamp();
+  await saveJSON('roster', roster);
+  currentStudent = roster[idx];
+  issuedCreds = creds;
+  page = 'credentials-issued';
+  render();
+}
+
+/* ================= VOTE LOGIN ================= */
+async function submitVoteLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const errBox = document.getElementById('loginMsg');
+  errBox.innerHTML = '';
+  if(!u || !p){ errBox.innerHTML = `<div class="msg-box error">Please enter your username and password.</div>`; return; }
+
+  const roster = await loadJSON('roster', []);
+  const match = roster.find(s => s.username === u && s.password === p);
+  if(!match){
+    errBox.innerHTML = `<div class="msg-box error">Invalid username or password.</div>`;
+    return;
+  }
+  if(match.voted){
+    currentStudent = match;
+    page = 'locked';
+    render();
+    return;
+  }
+  currentStudent = match;
+  page = 'ballot';
+  selections = {};
+  render();
+}
+
+/* ================= BALLOT ================= */
+async function submitVote(){
+  const positions = [...new Set((await loadJSON('candidates',[])).map(c=>c.position))];
+  const missing = positions.filter(p=>!selections[p]);
+  if(missing.length){
+    alert('Please select a candidate for: ' + missing.join(', '));
+    return;
+  }
+  page = 'confirm';
+  render();
+}
+
+async function finalizeVote(){
+  const votes = await loadJSON('votes', {});
+  Object.values(selections).forEach(cid=>{ votes[cid] = (votes[cid]||0) + 1; });
+  await saveJSON('votes', votes);
+
+  const roster = await loadJSON('roster', []);
+  const idx = roster.findIndex(s=>s.id===currentStudent.id);
+  const stampTime = nowStamp();
+  if(idx>-1){
+    roster[idx].voted = true;
+    roster[idx].votedAt = stampTime;
+    currentStudent = roster[idx];
+  }
+  await saveJSON('roster', roster);
+  page = 'done';
+  render();
+}
+
+function resetFlow(){
+  currentStudent = null;
+  issuedCreds = null;
+  selections = {};
+  history.replaceState(null,'',location.pathname);
+  page = 'home';
+  render();
+}
+
+/* ================= VOTER RENDER ================= */
+async function renderVoter(container){
+
+  if(page === 'home'){
+    container.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">Student Election</div>
+        <h2>Welcome</h2>
+        <p class="sub">Choose what you'd like to do.</p>
+        <div class="choice-card" onclick="page='register';render();">
+          <div class="ct">1 — Get My Voting Credentials</div>
+          <div class="cd">Verify your name and student ID to receive your one-time username and password.</div>
+        </div>
+        <div class="choice-card" onclick="page='vote-login';render();">
+          <div class="ct">2 — Vote Now</div>
+          <div class="cd">Already have your credentials? Log in here to cast your vote.</div>
+        </div>
+      </div>`;
+  }
+
+  else if(page === 'register'){
+    container.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">Step 1 of 2</div>
+        <h2>Get Your Credentials</h2>
+        <p class="sub">Enter your details exactly as recorded by the election committee.</p>
+        <div id="regMsg"></div>
+        <div class="field"><input type="text" id="regName" placeholder="Full name"></div>
+        <div class="field"><input type="text" id="regId" placeholder="Student ID number"></div>
+        <button class="btn btn-primary" onclick="submitRegister()">Get My Credentials</button>
+        <div class="link-line">Already have credentials? <button class="linklike" onclick="page='vote-login';render();">Log in to vote</button></div>
+      </div>`;
+  }
+
+  else if(page === 'credentials-issued'){
+    container.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">Success</div>
+        <h2>Save These Now</h2>
+        <p class="sub">This is the only time your password will be shown. Write it down — you'll need it to vote.</p>
+        <div class="cred-box">
+          <div class="cred-row"><span class="k">Student</span><span class="v" style="text-transform:none;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;">${currentStudent.name}</span></div>
+          <div class="cred-row"><span class="k">Username</span><span class="v">${issuedCreds.username}</span></div>
+          <div class="cred-row"><span class="k">Password</span><span class="v">${issuedCreds.password}</span></div>
+        </div>
+        <button class="btn btn-primary" onclick="page='vote-login';render();">Continue to Vote Login</button>
+        <div class="link-line">You can also come back to this device's scan link later.</div>
+      </div>`;
+  }
+
+  else if(page === 'already-voted-info'){
+    container.innerHTML = `
+      <div class="card">
+        <div class="badge-ring locked">ALREADY<br>VOTED</div>
+        <h2 class="center" style="text-align:center;">${currentStudent.name}</h2>
+        <p class="sub">This student has already voted${currentStudent.votedAt? ' on '+currentStudent.votedAt:''}. Credentials cannot be reissued.</p>
+        <button class="btn btn-ghost" onclick="resetFlow()">Back</button>
+      </div>`;
+  }
+
+  else if(page === 'vote-login'){
+    container.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">Step 2 of 2</div>
+        <h2>Election Login</h2>
+        <p class="sub">Use the username and password you received earlier.</p>
+        <div id="loginMsg"></div>
+        <div class="field"><input type="text" id="loginUser" placeholder="Username"></div>
+        <div class="field"><input type="password" id="loginPass" placeholder="Password"></div>
+        <div class="link-line" style="margin:-4px 0 16px;text-align:right;"><span style="font-size:12.5px;color:var(--text-3);">Trouble logging in? See the election committee.</span></div>
+        <button class="btn btn-primary" onclick="submitVoteLogin()">Log in</button>
+        <div class="link-line">Don't have an account? <button class="linklike" onclick="page='register';render();">Get your credentials</button></div>
+      </div>`;
+  }
+
+  else if(page === 'ballot'){
+    const candidates = await loadJSON('candidates', []);
+    if(candidates.length===0){
+      container.innerHTML = `<div class="card"><div class="eyebrow">Ballot</div><h2>No Candidates Yet</h2><p class="sub">Ask the election committee to add candidates first.</p></div>`;
+      return;
+    }
+    const positions = [...new Set(candidates.map(c=>c.position))];
+    let html = `<div class="card"><div class="eyebrow">Official Ballot</div><h2>Hi, ${currentStudent.name.split(' ')[0]}!</h2><p class="sub">Select one candidate per position, then submit.</p>`;
+    positions.forEach(pos=>{
+      const opts = candidates.filter(c=>c.position===pos);
+      html += `<div class="position-block"><h3>${pos} <span class="count">${opts.length} candidates</span></h3>`;
+      opts.forEach(c=>{
+        const sel = selections[pos]===c.id;
+        html += `
+          <div class="cand-card ${sel?'selected':''}" onclick="pickCandidate('${pos.replace(/'/g,"\\'")}','${c.id}')">
+            <div class="cand-radio"></div>
+            <div><div class="cand-name">${c.name}</div>${c.slogan?`<div class="cand-slogan">${c.slogan}</div>`:''}</div>
+          </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `<button class="btn btn-primary" onclick="submitVote()">Submit My Vote</button></div>`;
+    container.innerHTML = html;
+  }
+
+  else if(page === 'confirm'){
+    const candidates = await loadJSON('candidates', []);
+    let rows = Object.entries(selections).map(([pos,cid])=>{
+      const c = candidates.find(x=>x.id===cid);
+      return `<div class="cred-row"><span class="k">${pos}</span><span class="v" style="font-family:'Inter',sans-serif;font-weight:600;font-size:14px;">${c?c.name:'—'}</span></div>`;
+    }).join('');
+    container.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">Final Step</div>
+        <h2>Confirm Your Vote</h2>
+        <p class="sub">This cannot be changed once submitted.</p>
+        <div class="cred-box">${rows}</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="page='ballot';render();">Back</button>
+          <button class="btn btn-primary" onclick="finalizeVote()">Submit</button>
+        </div>
+      </div>`;
+  }
+
+  else if(page === 'done'){
+    container.innerHTML = `
+      <div class="card">
+        <div class="badge-ring">VOTED<br>✓</div>
+        <h2 style="text-align:center;">Thank you, ${currentStudent.name.split(' ')[0]}!</h2>
+        <p class="sub">Your vote has been recorded and your attendance is confirmed automatically.</p>
+        <div class="cred-box">
+          <div class="cred-row"><span class="k">Student</span><span class="v" style="font-family:'Inter',sans-serif;font-weight:600;font-size:14px;">${currentStudent.name}</span></div>
+          <div class="cred-row"><span class="k">Time</span><span class="v" style="font-family:'Inter',sans-serif;font-weight:600;font-size:14px;">${currentStudent.votedAt}</span></div>
+        </div>
+        <p class="note center" style="text-align:center;">This account can no longer be used to log in.</p>
+        <button class="btn btn-ghost" onclick="resetFlow()">Done — Hand back device</button>
+      </div>`;
+  }
+
+  else if(page === 'locked'){
+    container.innerHTML = `
+      <div class="card">
+        <div class="badge-ring locked">ACCESS<br>DENIED</div>
+        <h2 style="text-align:center;">${currentStudent.name}</h2>
+        <p class="sub">This account already voted${currentStudent.votedAt? ' on '+currentStudent.votedAt:''} and cannot be used again.</p>
+        <button class="btn btn-ghost" onclick="resetFlow()">Back</button>
+      </div>`;
+  }
+}
+
+function pickCandidate(pos, cid){ selections[pos] = cid; render(); }
+
+/* ================= ADMIN ================= */
+function setAdminTab(t){ adminTab = t; render(); }
+
+async function renderAdmin(container){
+  if(!adminAuthed){
+    container.innerHTML = `
+      <div class="card">
+        <div class="eyebrow">Committee Access</div>
+        <h2>Admin Login</h2>
+        <p class="sub">Restricted to election committee members.</p>
+        <div class="field"><input type="password" id="adminPassInput" placeholder="Admin password"></div>
+        <button class="btn btn-primary" onclick="tryAdminLogin()">Enter</button>
+        <p class="note" style="text-align:center;">Demo password: <span class="mono">admin123</span></p>
+      </div>`;
+    return;
+  }
+
+  const roster = await loadJSON('roster', []);
+  const candidates = await loadJSON('candidates', []);
+  const votes = await loadJSON('votes', {});
+  const positions = [...new Set(candidates.map(c=>c.position))];
+
+  const notRegistered = roster.filter(s=>!s.username);
+  const registeredNotVoted = roster.filter(s=>s.username && !s.voted);
+  const votedList = roster.filter(s=>s.voted).sort((a,b)=>(a.votedAt||'').localeCompare(b.votedAt||''));
+
+  let html = `<div class="wrap wide" style="margin:0;">
+    <div class="grid-3">
+      <div class="stat-box"><div class="num">${roster.length}</div><div class="lab">Total students</div></div>
+      <div class="stat-box"><div class="num">${registeredNotVoted.length}</div><div class="lab">Credentials issued, not yet voted</div></div>
+      <div class="stat-box"><div class="num">${votedList.length}</div><div class="lab">Voted</div></div>
+    </div>
+    <div class="adm-tabs" style="margin-top:16px;">
+      <button class="${adminTab==='candidates'?'active':''}" onclick="setAdminTab('candidates')">Candidates</button>
+      <button class="${adminTab==='roster'?'active':''}" onclick="setAdminTab('roster')">Students</button>
+      <button class="${adminTab==='qr'?'active':''}" onclick="setAdminTab('qr')">QR Codes</button>
+      <button class="${adminTab==='monitor'?'active':''}" onclick="setAdminTab('monitor')">Monitoring</button>
+      <button class="${adminTab==='results'?'active':''}" onclick="setAdminTab('results')">Results</button>
+      <button class="tiny-btn" style="margin-left:auto;" onclick="adminAuthed=false;render();">Log out</button>
+    </div>`;
+
+  if(adminTab==='candidates'){
+    html += `<div class="panel">
+      <h3>Add Candidate</h3>
+      <div class="grid-2">
+        <div class="field"><label class="field-label">Position</label><input type="text" id="candPos" placeholder="e.g. President"></div>
+        <div class="field"><label class="field-label">Candidate Name</label><input type="text" id="candName" placeholder="Juan Dela Cruz"></div>
+      </div>
+      <div class="field"><label class="field-label">Slogan (optional)</label><input type="text" id="candSlogan" placeholder="For the students!"></div>
+      <button class="btn btn-primary" onclick="addCandidate()">Add Candidate</button>
+    </div>
+    <div class="panel"><h3>Candidate List (${candidates.length})</h3>
+      <table><thead><tr><th>Position</th><th>Name</th><th>Slogan</th><th></th></tr></thead><tbody>
+      ${candidates.map(c=>`<tr><td>${c.position}</td><td>${c.name}</td><td>${c.slogan||'—'}</td><td><button class="tiny-btn" onclick="removeCandidate('${c.id}')">Remove</button></td></tr>`).join('') || `<tr><td colspan="4" class="empty-note">No candidates yet.</td></tr>`}
+      </tbody></table>
+    </div>`;
+  }
+
+  else if(adminTab==='roster'){
+    html += `<div class="panel">
+      <h3>Import Students</h3>
+      <p class="note">One line per student: <span class="mono">Full Name, Student ID</span></p>
+      <textarea id="bulkRoster" placeholder="Juan Dela Cruz, 2026-1001&#10;Maria Santos, 2026-1002"></textarea>
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="bulkAddStudents()">Add to Roster</button>
+    </div>
+    <div class="panel"><h3>Student Roster (${roster.length})</h3>
+      <table><thead><tr><th>Name</th><th>ID</th><th>Username</th><th>Status</th><th></th></tr></thead><tbody>
+      ${roster.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td class="mono">${s.username||'—'}</td><td>${s.voted?`<span class="pill ok">Voted</span>`:(s.username?`<span class="pill mid">Issued, not voted</span>`:`<span class="pill no">Not registered</span>`)}</td><td><button class="tiny-btn" onclick="removeStudent('${s.id}')">Remove</button></td></tr>`).join('') || `<tr><td colspan="5" class="empty-note">No students yet.</td></tr>`}
+      </tbody></table>
+    </div>`;
+  }
+
+  else if(adminTab==='qr'){
+    html += `<div class="panel">
+      <h3>QR Code 1 — Get Credentials</h3>
+      <p class="note">Post this where students check in. Scanning it opens the name + ID form so each student can claim their one-time username and password.</p>
+    </div>
+    <div class="panel">
+      <h3>QR Code 2 — Vote Login</h3>
+      <p class="note">Post this at the voting station. Scanning it opens the username + password login for casting a vote.</p>
+    </div>
+    <div class="panel">
+      <button class="btn btn-primary" onclick="printBothQR()">🖨️ Print Both QR Codes</button>
+      <div class="qr-grid" id="adminQrGrid" style="margin-top:18px;"></div>
+    </div>`;
+  }
+
+  else if(adminTab==='monitor'){
+    html += `<div class="panel">
+      <h3>Registered but Not Yet Voted (${registeredNotVoted.length})</h3>
+      <table><thead><tr><th>Name</th><th>ID</th><th>Username</th><th>Issued</th></tr></thead><tbody>
+      ${registeredNotVoted.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td class="mono">${s.username}</td><td>${s.issuedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="4" class="empty-note">Nobody in this state right now.</td></tr>`}
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <h3>Not Yet Registered (${notRegistered.length})</h3>
+      <table><thead><tr><th>Name</th><th>ID</th></tr></thead><tbody>
+      ${notRegistered.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td></tr>`).join('') || `<tr><td colspan="2" class="empty-note">Everyone has registered.</td></tr>`}
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <h3>Voted / Attendance (${votedList.length})</h3>
+      <table><thead><tr><th>Name</th><th>ID</th><th>Time</th></tr></thead><tbody>
+      ${votedList.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.id}</td><td>${s.votedAt||'—'}</td></tr>`).join('') || `<tr><td colspan="3" class="empty-note">No one has voted yet.</td></tr>`}
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <h3>Reset Election</h3>
+      <p class="note">Clears all issued credentials, votes, and attendance. Roster and candidates stay intact.</p>
+      <button class="btn btn-danger" onclick="resetElection()">Reset Credentials, Votes &amp; Attendance</button>
+    </div>`;
+  }
+
+  else if(adminTab==='results'){
+    html += `<div class="panel"><h3>Live Results</h3>`;
+    if(positions.length===0){ html += `<p class="empty-note">No candidates to show yet.</p>`; }
+    positions.forEach(pos=>{
+      const opts = candidates.filter(c=>c.position===pos);
+      const total = opts.reduce((s,c)=> s + (votes[c.id]||0), 0) || 1;
+      html += `<div style="margin-bottom:20px;"><div class="eyebrow" style="text-align:left;">${pos}</div>`;
+      opts.forEach(c=>{
+        const v = votes[c.id]||0;
+        const pct = Math.round((v/total)*100);
+        html += `<div class="bar-row"><div class="bar-label"><span>${c.name}</span><span class="mono">${v} votes</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+
+  if(adminTab==='qr'){ setTimeout(renderQrCodes, 30); }
+}
+
+function tryAdminLogin(){
+  const val = document.getElementById('adminPassInput').value;
+  if(val === ADMIN_PASS){ adminAuthed = true; render(); }
+  else alert('Incorrect password.');
+}
+
+async function addCandidate(){
+  const pos = document.getElementById('candPos').value.trim();
+  const name = document.getElementById('candName').value.trim();
+  const slogan = document.getElementById('candSlogan').value.trim();
+  if(!pos || !name){ alert('Position and name are required.'); return; }
+  const candidates = await loadJSON('candidates', []);
+  candidates.push({id: uid('c_'), position: pos, name, slogan});
+  await saveJSON('candidates', candidates);
+  render();
+}
+async function removeCandidate(id){
+  let candidates = await loadJSON('candidates', []);
+  candidates = candidates.filter(c=>c.id!==id);
+  await saveJSON('candidates', candidates);
+  render();
+}
+
+async function bulkAddStudents(){
+  const raw = document.getElementById('bulkRoster').value;
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length===0) return;
+  const roster = await loadJSON('roster', []);
+  const existingIds = new Set(roster.map(s=>s.id));
+  let added = 0;
+  lines.forEach(line=>{
+    const parts = line.split(',');
+    if(parts.length<2) return;
+    const name = parts[0].trim();
+    const id = parts.slice(1).join(',').trim();
+    if(!name || !id || existingIds.has(id)) return;
+    roster.push({id, name, username:null, password:null, issuedAt:null, voted:false, votedAt:null});
+    existingIds.add(id);
+    added++;
+  });
+  await saveJSON('roster', roster);
+  alert(added + ' student(s) added.');
+  render();
+}
+async function removeStudent(id){
+  let roster = await loadJSON('roster', []);
+  roster = roster.filter(s=>s.id!==id);
+  await saveJSON('roster', roster);
+  render();
+}
+
+async function resetElection(){
+  if(!confirm('Reset all issued credentials, votes, and attendance?')) return;
+  let roster = await loadJSON('roster', []);
+  roster = roster.map(s=>({...s, username:null, password:null, issuedAt:null, voted:false, votedAt:null}));
+  await saveJSON('roster', roster);
+  await saveJSON('votes', {});
+  render();
+}
+
+function renderQrCodes(){
+  const grid = document.getElementById('adminQrGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const base = location.origin + location.pathname;
+  const items = [
+    {url: base + '?page=register', label:'QR Code 1', desc:'Get Credentials'},
+    {url: base + '?page=vote', label:'QR Code 2', desc:'Vote Login'}
+  ];
+  items.forEach(it=>{
+    const cell = document.createElement('div');
+    cell.className = 'qr-tix';
+    const holder = document.createElement('div');
+    holder.className = 'qr-holder';
+    cell.appendChild(holder);
+    const lab = document.createElement('div');
+    lab.className = 'qlabel';
+    lab.textContent = it.label;
+    const desc = document.createElement('div');
+    desc.className = 'qdesc';
+    desc.textContent = it.desc;
+    cell.appendChild(lab);
+    cell.appendChild(desc);
+    grid.appendChild(cell);
+    new QRCode(holder, {text: it.url, width:140, height:140, colorDark:'#04060c', colorLight:'#ffffff'});
+  });
+}
+
+function printBothQR(){
+  const grid = document.getElementById('adminQrGrid');
+  const area = document.getElementById('qrPrintArea');
+  if(!grid) return;
+  area.innerHTML = '<h2 style="font-family:Sora,sans-serif;">Election Portal — QR Codes</h2><div class="qr-grid">' + grid.innerHTML + '</div>';
+  window.print();
+}
+
+/* ================= ROOT RENDER ================= */
+async function render(){
+  const app = document.getElementById('app');
+  if(mode==='admin'){
+    app.classList.add('wide');
+    await renderAdmin(app);
+  } else {
+    app.classList.remove('wide');
+    await renderVoter(app);
+  }
+}
+</script>
+</body>
+</html>
