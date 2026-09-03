@@ -293,7 +293,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
   render();
 });
 
-function generateUniqueCredentials(roster, name, id){
+function generateUniqueCredentials(roster, id_no, email){
   const usedUsernames = new Set(roster.filter(s=>s.username).map(s=>s.username));
   const usedPasswords = new Set(roster.filter(s=>s.password).map(s=>s.password));
   const base = (name.trim().split(' ')[0] || 'voter').toLowerCase().replace(/[^a-z]/g,'') || 'voter';
