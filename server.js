@@ -38,48 +38,74 @@ app.post('/api/signup', async (req, res) => {
   const { id_no, name, email } = req.body;
 
   try {
-    const { data: Student, error: fetchError } = await supabase
+    // 1. Fetch student from Supabase
+    const { data: student, error: fetchError } = await supabase
       .from('Student')
       .select('*')
       .eq('id_no', id_no)
       .single();
 
-    if (fetchError || !Student) {
+    if (fetchError || !student) {
       return res.status(404).json({ success: false, message: 'ID Number not found in the roster.' });
     }
 
-    if (Student.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+    // 2. Validate name match
+    if (student.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
       return res.status(400).json({ success: false, message: 'The name provided does not match this ID Number in the roster.' });
     }
 
-    if (Student.email && Student.username) {
+    // 3. Check if already registered
+    if (student.email && student.username) {
       return res.status(400).json({ success: false, message: 'An account has already been generated for this student.' });
     }
 
-    const username = `user_${id_no.replace(/-/g, '')}`;
-    const tempPassword = crypto.randomBytes(4).toString('hex');
+    // 4. Generate random username and password
+    const username = 'voter_' + Math.floor(1000 + Math.random() * 9000);
+    const password = Math.random().toString(36).slice(-8); // or a simple alphanumeric string
+    const issuedAt = new Date().toISOString();
 
+    // 5. Auto-save email and credentials to Supabase
     const { error: updateError } = await supabase
       .from('Student')
-      .update({ email: email, username: username, password: tempPassword })
+      .update({
+        email: email,
+        username: username,
+        password: password,
+        issued_at: issuedAt,
+        voted: false
+      })
       .eq('id_no', id_no);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('Supabase update error:', updateError);
+      return res.status(500).json({ success: false, message: 'Failed to save credentials to database.' });
+    }
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'CCDI SSG Election Portal Credentials',
-      text: `Hello ${Student.name},\n\nYour username is: ${username}\nYour temporary password is: ${tempPassword}\n\nUse these credentials to log in and vote.`
+    // 6. Send the generated credentials via Nodemailer
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // or your SMTP configuration
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
     });
 
-    res.json({ success: true, message: 'Credentials generated and sent to your email.' });
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Your CCDI SSG Election Voting Credentials',
+      text: `Hello ${student.name},\n\nYour voter account has been successfully generated.\n\nUsername: ${username}\nPassword: ${password}\n\nUse these credentials to log in and cast your vote on the election portal.`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.status(200).json({ success: true, message: 'Credentials generated, saved, and emailed successfully.' });
+
   } catch (err) {
     console.error('Signup error:', err);
-    res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
-});
-
+  });
 // GET endpoint to load JSON data by key from Supabase
 app.get('/api/:key', async (req, res) => {
   const { key } = req.params;
@@ -93,7 +119,7 @@ app.get('/api/:key', async (req, res) => {
     return res.json(null);
   }
   res.json(data.value);
-});
+    });   
 
 // POST endpoint to save or update JSON data by key in Supabase
 app.post('/api/:key', async (req, res) => {
