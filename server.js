@@ -38,21 +38,21 @@ app.post('/api/signup', async (req, res) => {
   const { id_no, name, email } = req.body;
 
   try {
-    const { data: student, error: fetchError } = await supabase
-      .from('students')
+    const { data: Student, error: fetchError } = await supabase
+      .from('Student')
       .select('*')
       .eq('id_no', id_no)
       .single();
 
-    if (fetchError || !student) {
+    if (fetchError || !Student) {
       return res.status(404).json({ success: false, message: 'ID Number not found in the roster.' });
     }
 
-    if (student.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+    if (Student.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
       return res.status(400).json({ success: false, message: 'The name provided does not match this ID Number in the roster.' });
     }
 
-    if (student.email && student.username) {
+    if (Student.email && Student.username) {
       return res.status(400).json({ success: false, message: 'An account has already been generated for this student.' });
     }
 
@@ -60,7 +60,7 @@ app.post('/api/signup', async (req, res) => {
     const tempPassword = crypto.randomBytes(4).toString('hex');
 
     const { error: updateError } = await supabase
-      .from('students')
+      .from('Student')
       .update({ email: email, username: username, password: tempPassword })
       .eq('id_no', id_no);
 
@@ -70,7 +70,7 @@ app.post('/api/signup', async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'CCDI SSG Election Portal Credentials',
-      text: `Hello ${student.name},\n\nYour username is: ${username}\nYour temporary password is: ${tempPassword}\n\nUse these credentials to log in and vote.`
+      text: `Hello ${Student.name},\n\nYour username is: ${username}\nYour temporary password is: ${tempPassword}\n\nUse these credentials to log in and vote.`
     });
 
     res.json({ success: true, message: 'Credentials generated and sent to your email.' });
