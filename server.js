@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +24,53 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// POST endpoint for student signup, credential generation, and email dispatch
+app.post('/api/signup', async (req, res) => {
+  const { id_no, email } = req.body;
+
+  try {
+    const { data: student, error: fetchError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id_no', id_no)
+      .single();
+
+    if (fetchError || !student) {
+      return res.status(404).json({ success: false, message: 'ID Number not found in the roster.' });
+    }
+
+    const username = `user_${id_no.replace(/-/g, '')}`;
+    const tempPassword = crypto.randomBytes(4).toString('hex');
+
+    const { error: updateError } = await supabase
+      .from('students')
+      .update({ email: email, username: username, password: tempPassword })
+      .eq('id_no', id_no);
+
+    if (updateError) throw updateError;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'CCDI SSG Election Portal Credentials',
+      text: `Hello ${student.name},\n\nYour username is: ${username}\nYour temporary password is: ${tempPassword}\n\nUse these credentials to log in and vote.`
+    });
+
+    res.json({ success: true, message: 'Credentials generated and sent to your email.' });
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // GET endpoint to load JSON data by key from Supabase
 app.get('/api/:key', async (req, res) => {
