@@ -35,7 +35,7 @@ const transporter = nodemailer.createTransport({
 
 // POST endpoint for student signup, credential generation, and email dispatch
 app.post('/api/signup', async (req, res) => {
-  const { id_no, email } = req.body;
+  const { id_no, name, email } = req.body;
 
   try {
     const { data: student, error: fetchError } = await supabase
@@ -46,6 +46,14 @@ app.post('/api/signup', async (req, res) => {
 
     if (fetchError || !student) {
       return res.status(404).json({ success: false, message: 'ID Number not found in the roster.' });
+    }
+
+    if (student.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+      return res.status(400).json({ success: false, message: 'The name provided does not match this ID Number in the roster.' });
+    }
+
+    if (student.email && student.username) {
+      return res.status(400).json({ success: false, message: 'An account has already been generated for this student.' });
     }
 
     const username = `user_${id_no.replace(/-/g, '')}`;
@@ -82,7 +90,7 @@ app.get('/api/:key', async (req, res) => {
     .single();
 
   if (error || !data) {
-    return res.json(null); // Return null if key doesn't exist yet
+    return res.json(null);
   }
   res.json(data.value);
 });
